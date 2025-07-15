@@ -68,6 +68,50 @@
             }
         }
 
+        /* Language Switcher Navigation */
+        .language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px; /* Space below switcher */
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Subtle separator */
+        }
+
+        .nav-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #555;
+            background: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px; /* Ensure buttons have a minimum width */
+            text-align: center;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+            background: #dce3ec;
+        }
+
+        /* Active button style */
+        .nav-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.25);
+            cursor: default; /* Not clickable if active */
+            transform: none; /* No hover effect on active */
+            pointer-events: none; /* Disable clicks on active */
+        }
+
         .section {
             margin-bottom: 25px; /* Reduced margin between sections */
             padding: 20px; /* Adjusted padding */
@@ -444,6 +488,13 @@
     <div class="container">
         <h1>🎤 ระบบแปลภาษา (ไทย ↔ ญี่ปุ่น)</h1>
         
+        <div class="language-switcher">
+            <a href="https://nessakura.github.io/thai-english-voice-translator/" class="nav-btn" id="navEnglish">🇹🇭-🇬🇧</a>
+            <a href="https://nessakura.github.io/thai-japan-voice-translator/" class="nav-btn" id="navJapanese">🇹🇭-🇯🇵</a>
+            <a href="https://nessakura.github.io/thai-korea-voice-translator/" class="nav-btn" id="navKorean">🇹🇭-🇰🇷</a>
+            <a href="https://nessakura.github.io/thai-china-voice-translator/" class="nav-btn" id="navChinese">🇹🇭-🇨🇳</a>
+        </div>
+
         <div class="api-setup" id="apiSetupSection">
             <h2><span class="icon">🔑</span> ตั้งค่า Gemini API Key</h2>
             <div class="warning">
@@ -541,16 +592,17 @@
         class BiDirectionalVoiceTranslator {
             constructor() {
                 this.geminiApiKey = localStorage.getItem('geminiApiKey') || '';
-                this.speechSynthesisUtteranceJapanese = null; // Changed from English
+                this.speechSynthesisUtteranceJapanese = null;
                 this.speechSynthesisUtteranceThai = null;
                 this.currentMode = 'thaiToJapanese'; // Default mode: Thai to Japanese
 
                 this.initializeElements();
                 this.setupGlobalEventListeners();
-                this.setupThaiToJapaneseMode(); // New method for Thai-Japanese
-                this.setupJapaneseToThaiMode(); // New method for Japanese-Thai
+                this.setupThaiToJapaneseMode();
+                this.setupJapaneseToThaiMode();
                 this.checkApiKeyStatus();
                 this.switchMode(this.currentMode); // Set initial display mode
+                this.highlightActiveNavButton(); // Highlight the current page's button
             }
 
             initializeElements() {
@@ -563,25 +615,25 @@
                 this.clearAllBtn = document.getElementById('clearAllBtn');
 
                 // Mode selector buttons
-                this.modeThaiToJapaneseBtn = document.getElementById('modeThaiToJapaneseBtn'); // Changed ID
-                this.modeJapaneseToThaiBtn = document.getElementById('modeJapaneseToThaiBtn'); // Changed ID
-                this.thaiToJapaneseSection = document.getElementById('thaiToJapaneseSection'); // Changed ID
-                this.japaneseToThaiSection = document.getElementById('japaneseToThaiSection'); // Changed ID
+                this.modeThaiToJapaneseBtn = document.getElementById('modeThaiToJapaneseBtn');
+                this.modeJapaneseToThaiBtn = document.getElementById('modeJapaneseToThaiBtn');
+                this.thaiToJapaneseSection = document.getElementById('thaiToJapaneseSection');
+                this.japaneseToThaiSection = document.getElementById('japaneseToThaiSection');
 
 
-                // Thai to Japanese elements (previously Thai to English)
+                // Thai to Japanese elements
                 this.startThaiBtn = document.getElementById('startThaiBtn');
                 this.stopThaiBtn = document.getElementById('stopThaiBtn');
                 this.thaiText = document.getElementById('thaiText');
-                this.translateThaiToJapaneseBtn = document.getElementById('translateThaiToJapaneseBtn'); // Changed ID
-                this.japaneseText = document.getElementById('japaneseText'); // Changed ID
-                this.listenJapaneseBtn = document.getElementById('listenJapaneseBtn'); // Changed ID
+                this.translateThaiToJapaneseBtn = document.getElementById('translateThaiToJapaneseBtn');
+                this.japaneseText = document.getElementById('japaneseText');
+                this.listenJapaneseBtn = document.getElementById('listenJapaneseBtn');
 
-                // Japanese to Thai elements (previously English to Thai)
-                this.startJapaneseBtn = document.getElementById('startJapaneseBtn'); // Changed ID
-                this.stopJapaneseBtn = document.getElementById('stopJapaneseBtn'); // Changed ID
-                this.japaneseListenText = document.getElementById('japaneseListenText'); // Changed ID
-                this.translateJapaneseToThaiBtn = document.getElementById('translateJapaneseToThaiBtn'); // Changed ID
+                // Japanese to Thai elements
+                this.startJapaneseBtn = document.getElementById('startJapaneseBtn');
+                this.stopJapaneseBtn = document.getElementById('stopJapaneseBtn');
+                this.japaneseListenText = document.getElementById('japaneseListenText');
+                this.translateJapaneseToThaiBtn = document.getElementById('translateJapaneseToThaiBtn');
                 this.thaiTranslatedText = document.getElementById('thaiTranslatedText');
                 this.listenThaiBtn = document.getElementById('listenThaiBtn');
             }
@@ -606,8 +658,17 @@
                 this.clearAllBtn.addEventListener('click', () => this.clearAll());
                 
                 // Mode selector event listeners
-                this.modeThaiToJapaneseBtn.addEventListener('click', () => this.switchMode('thaiToJapanese')); // Changed mode name
-                this.modeJapaneseToThaiBtn.addEventListener('click', () => this.switchMode('japaneseToThai')); // Changed mode name
+                this.modeThaiToJapaneseBtn.addEventListener('click', () => this.switchMode('thaiToJapanese'));
+                this.modeJapaneseToThaiBtn.addEventListener('click', () => this.switchMode('japaneseToThai'));
+            }
+
+            highlightActiveNavButton() {
+                const navButtons = document.querySelectorAll('.language-switcher .nav-btn');
+                navButtons.forEach(button => {
+                    if (button.href === window.location.href) {
+                        button.classList.add('active');
+                    }
+                });
             }
 
             switchMode(mode) {
@@ -615,7 +676,7 @@
                 this.stopAllAudioAndRecognition();
                 this.clearAllTextareas(); // Clear textareas when switching mode
 
-                if (mode === 'thaiToJapanese') { // Changed mode name
+                if (mode === 'thaiToJapanese') {
                     this.thaiToJapaneseSection.style.display = 'block';
                     this.japaneseToThaiSection.style.display = 'none';
                     this.modeThaiToJapaneseBtn.classList.add('active');
@@ -631,27 +692,9 @@
                 this.checkApiKeyStatus(); // Re-check and enable features based on API key
             }
 
-            checkApiKeyStatus() {
-                if (this.geminiApiKey) {
-                    this.apiSetupSection.style.display = 'none';
-                    this.apiKeyStatusDisplay.style.display = 'flex';
-                    this.updateStatus(`พร้อมใช้งาน: ${this.currentMode === 'thaiToJapanese' ? 'ไทย ➡️ ญี่ปุ่น' : 'ญี่ปุ่น ➡️ ไทย'}`, 'success');
-                    this.enableAllFeatures();
-                } else {
-                    this.apiSetupSection.style.display = 'block';
-                    this.apiKeyInput.value = '';
-                    this.apiKeyInput.disabled = false;
-                    this.saveApiKeyBtn.style.display = 'inline-block';
-                    this.removeApiKeyBtn.style.display = 'none';
-                    this.apiKeyStatusDisplay.style.display = 'none';
-                    this.updateStatus('กรุณาใส่ Gemini API Key ก่อนใช้งาน', 'error');
-                    this.disableAllFeatures();
-                }
-            }
-
             enableAllFeatures() {
                 this.startThaiBtn.disabled = false;
-                this.startJapaneseBtn.disabled = false; // Changed
+                this.startJapaneseBtn.disabled = false;
                 this.updateTranslateButtonStates();
                 this.updateListenButtonStates();
             }
@@ -659,12 +702,12 @@
             disableAllFeatures() {
                 this.startThaiBtn.disabled = true;
                 this.stopThaiBtn.disabled = true;
-                this.translateThaiToJapaneseBtn.disabled = true; // Changed
-                this.listenJapaneseBtn.disabled = true; // Changed
+                this.translateThaiToJapaneseBtn.disabled = true;
+                this.listenJapaneseBtn.disabled = true;
 
-                this.startJapaneseBtn.disabled = true; // Changed
-                this.stopJapaneseBtn.disabled = true; // Changed
-                this.translateJapaneseToThaiBtn.disabled = true; // Changed
+                this.startJapaneseBtn.disabled = true;
+                this.stopJapaneseBtn.disabled = true;
+                this.translateJapaneseToThaiBtn.disabled = true;
                 this.listenThaiBtn.disabled = true;
             }
 
@@ -704,12 +747,12 @@
             }
 
             updateTranslateButtonStates() {
-                this.translateThaiToJapaneseBtn.disabled = !this.thaiText.value.trim() || !this.geminiApiKey; // Changed
-                this.translateJapaneseToThaiBtn.disabled = !this.japaneseListenText.value.trim() || !this.geminiApiKey; // Changed
+                this.translateThaiToJapaneseBtn.disabled = !this.thaiText.value.trim() || !this.geminiApiKey;
+                this.translateJapaneseToThaiBtn.disabled = !this.japaneseListenText.value.trim() || !this.geminiApiKey;
             }
 
             updateListenButtonStates() {
-                this.listenJapaneseBtn.disabled = !this.japaneseText.value.trim(); // Changed
+                this.listenJapaneseBtn.disabled = !this.japaneseText.value.trim();
                 this.listenThaiBtn.disabled = !this.thaiTranslatedText.value.trim();
             }
 
@@ -727,14 +770,14 @@
 
             clearAllTextareas() {
                 this.thaiText.value = '';
-                this.japaneseText.value = ''; // Changed
-                this.japaneseListenText.value = ''; // Changed
+                this.japaneseText.value = '';
+                this.japaneseListenText.value = '';
                 this.thaiTranslatedText.value = '';
             }
 
             stopAllAudioAndRecognition() {
                 if (this.isRecordingThai) this.stopRecordingThai();
-                if (this.isRecordingJapanese) this.stopRecordingJapanese(); // Changed
+                if (this.isRecordingJapanese) this.stopRecordingJapanese();
                 if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
             }
 
@@ -822,7 +865,7 @@
             }
 
             // --- Thai to Japanese Mode ---
-            setupThaiToJapaneseMode() { // Changed method name
+            setupThaiToJapaneseMode() {
                 this.isRecordingThai = false;
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -842,10 +885,10 @@
 
                 this.startThaiBtn.addEventListener('click', () => this.startRecordingThai());
                 this.stopThaiBtn.addEventListener('click', () => this.stopRecordingThai());
-                this.translateThaiToJapaneseBtn.addEventListener('click', () => this.translateThaiToJapanese()); // Changed
-                this.listenJapaneseBtn.addEventListener('click', () => this.speakJapaneseText()); // Changed
+                this.translateThaiToJapaneseBtn.addEventListener('click', () => this.translateThaiToJapanese());
+                this.listenJapaneseBtn.addEventListener('click', () => this.speakJapaneseText());
                 this.thaiText.addEventListener('input', () => this.updateTranslateButtonStates());
-                this.japaneseText.addEventListener('input', () => this.updateListenButtonStates()); // Changed
+                this.japaneseText.addEventListener('input', () => this.updateListenButtonStates());
             }
 
             startRecordingThai() {
@@ -853,7 +896,7 @@
                     this.updateStatus('กรุณาใส่ Gemini API Key ก่อนใช้งาน', 'error');
                     return;
                 }
-                if (this.isRecordingJapanese) { this.stopRecordingJapanese(); } // Stop other recording if active (Changed)
+                if (this.isRecordingJapanese) { this.stopRecordingJapanese(); }
                 if (this.recognitionThai && !this.isRecordingThai) {
                     this.recognitionThai.start();
                 }
@@ -876,7 +919,7 @@
                 this.stopThaiBtn.disabled = false;
                 this.startThaiBtn.classList.add('recording');
                 this.thaiText.value = '';
-                this.japaneseText.value = ''; // Changed
+                this.japaneseText.value = '';
                 this.updateListenButtonStates();
             }
 
@@ -902,26 +945,26 @@
                 this.stopRecordingThai();
                 if (this.thaiText.value.trim()) {
                     this.updateStatus('บันทึกเสียงไทยเสร็จสิ้น กำลังแปลภาษา...', 'processing');
-                    this.translateThaiToJapanese(); // Changed
+                    this.translateThaiToJapanese();
                 } else {
                     this.updateStatus('กดปุ่ม "เริ่มพูด (ไทย)" เพื่อเริ่มต้น', 'info');
                 }
             }
 
-            async translateThaiToJapanese() { // Changed method name
-                this.updateStatus('กำลังแปลภาษาไทยเป็นญี่ปุ่น...', 'processing'); // Changed text
-                this.translateThaiToJapaneseBtn.disabled = true; // Changed
-                this.japaneseText.value = 'Translating...'; // Changed
-                this.listenJapaneseBtn.disabled = true; // Changed
+            async translateThaiToJapanese() {
+                this.updateStatus('กำลังแปลภาษาไทยเป็นญี่ปุ่น...', 'processing');
+                this.translateThaiToJapaneseBtn.disabled = true;
+                this.japaneseText.value = 'Translating...';
+                this.listenJapaneseBtn.disabled = true;
 
-                const result = await this.translateText(this.thaiText.value, 'Thai', 'Japanese'); // Changed languages
-                this.japaneseText.value = result; // Changed
+                const result = await this.translateText(this.thaiText.value, 'Thai', 'Japanese');
+                this.japaneseText.value = result;
 
                 if (result && !result.startsWith('Error:')) {
-                    this.updateStatus('แปลภาษาไทยเป็นญี่ปุ่นเสร็จสิ้น', 'success'); // Changed text
-                    this.speakJapaneseText(); // Changed
+                    this.updateStatus('แปลภาษาไทยเป็นญี่ปุ่นเสร็จสิ้น', 'success');
+                    this.speakJapaneseText();
                 } else if (result.startsWith('Error:')) {
-                    this.japaneseText.value = result; // Changed
+                    this.japaneseText.value = result;
                 } else {
                     this.updateStatus('ไม่มีข้อความให้แปล หรือเกิดข้อผิดพลาด', 'error');
                 }
@@ -929,10 +972,10 @@
                 this.updateListenButtonStates();
             }
 
-            speakJapaneseText() { // Changed method name
-                const text = this.japaneseText.value.trim(); // Changed
+            speakJapaneseText() {
+                const text = this.japaneseText.value.trim();
                 if (!text || text.startsWith('Error:')) {
-                    this.updateStatus('ไม่มีข้อความภาษาญี่ปุ่นให้อ่าน', 'info'); // Changed text
+                    this.updateStatus('ไม่มีข้อความภาษาญี่ปุ่นให้อ่าน', 'info');
                     return;
                 }
 
@@ -940,85 +983,85 @@
                     window.speechSynthesis.cancel();
                 }
 
-                this.speechSynthesisUtteranceJapanese = new SpeechSynthesisUtterance(text); // Changed
-                this.speechSynthesisUtteranceJapanese.lang = 'ja-JP'; // Changed to Japanese language code
+                this.speechSynthesisUtteranceJapanese = new SpeechSynthesisUtterance(text);
+                this.speechSynthesisUtteranceJapanese.lang = 'ja-JP'; // Japanese (Japan)
                 
-                this.speechSynthesisUtteranceJapanese.onerror = (event) => { // Changed
-                    console.error('Speech synthesis error (Japanese):', event.error); // Changed
-                    this.updateStatus(`ไม่สามารถอ่านออกเสียงภาษาญี่ปุ่นได้: ${event.error}`, 'error'); // Changed
+                this.speechSynthesisUtteranceJapanese.onerror = (event) => {
+                    console.error('Speech synthesis error (Japanese):', event.error);
+                    this.updateStatus(`ไม่สามารถอ่านออกเสียงภาษาญี่ปุ่นได้: ${event.error}`, 'error');
                 };
-                this.speechSynthesisUtteranceJapanese.onstart = () => { // Changed
-                    this.updateStatus('กำลังอ่านออกเสียง (ญี่ปุ่น)...', 'processing'); // Changed
-                    this.listenJapaneseBtn.disabled = true; // Changed
+                this.speechSynthesisUtteranceJapanese.onstart = () => {
+                    this.updateStatus('กำลังอ่านออกเสียง (ญี่ปุ่น)...', 'processing');
+                    this.listenJapaneseBtn.disabled = true;
                 };
-                this.speechSynthesisUtteranceJapanese.onend = () => { // Changed
-                    this.updateStatus('อ่านออกเสียง (ญี่ปุ่น) เสร็จสิ้น', 'success'); // Changed
-                    this.listenJapaneseBtn.disabled = false; // Changed
+                this.speechSynthesisUtteranceJapanese.onend = () => {
+                    this.updateStatus('อ่านออกเสียง (ญี่ปุ่น) เสร็จสิ้น', 'success');
+                    this.listenJapaneseBtn.disabled = false;
                 };
 
-                window.speechSynthesis.speak(this.speechSynthesisUtteranceJapanese); // Changed
+                window.speechSynthesis.speak(this.speechSynthesisUtteranceJapanese);
             }
 
             // --- Japanese to Thai Mode ---
-            setupJapaneseToThaiMode() { // Changed method name
-                this.isRecordingJapanese = false; // Changed
+            setupJapaneseToThaiMode() {
+                this.isRecordingJapanese = false;
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognitionJapanese = new SpeechRecognition(); // Changed
-                    this.recognitionJapanese.continuous = true; // Changed
-                    this.recognitionJapanese.interimResults = true; // Changed
-                    this.recognitionJapanese.lang = 'ja-JP'; // Changed to Japanese language code
+                    this.recognitionJapanese = new SpeechRecognition();
+                    this.recognitionJapanese.continuous = true;
+                    this.recognitionJapanese.interimResults = true;
+                    this.recognitionJapanese.lang = 'ja-JP'; // Japanese (Japan)
 
-                    this.recognitionJapanese.onstart = () => this.onJapaneseRecognitionStart(); // Changed
-                    this.recognitionJapanese.onresult = (event) => this.onJapaneseRecognitionResult(event); // Changed
-                    this.recognitionJapanese.onerror = (event) => this.handleRecognitionError(event, 'ญี่ปุ่น'); // Changed
-                    this.recognitionJapanese.onend = () => this.onJapaneseRecognitionEnd(); // Changed
+                    this.recognitionJapanese.onstart = () => this.onJapaneseRecognitionStart();
+                    this.recognitionJapanese.onresult = (event) => this.onJapaneseRecognitionResult(event);
+                    this.recognitionJapanese.onerror = (event) => this.handleRecognitionError(event, 'ญี่ปุ่น');
+                    this.recognitionJapanese.onend = () => this.onJapaneseRecognitionEnd();
                 } else {
-                    this.startJapaneseBtn.disabled = true; // Changed
-                    this.updateStatus('เบราว์เซอร์ไม่รองรับการรู้จำเสียงภาษาญี่ปุ่น', 'error'); // Changed
+                    this.startJapaneseBtn.disabled = true;
+                    this.updateStatus('เบราว์เซอร์ไม่รองรับการรู้จำเสียงภาษาญี่ปุ่น', 'error');
                 }
 
-                this.startJapaneseBtn.addEventListener('click', () => this.startRecordingJapanese()); // Changed
-                this.stopJapaneseBtn.addEventListener('click', () => this.stopRecordingJapanese()); // Changed
-                this.japaneseListenText.addEventListener('input', () => this.updateTranslateButtonStates()); // Changed
+                this.startJapaneseBtn.addEventListener('click', () => this.startRecordingJapanese());
+                this.stopJapaneseBtn.addEventListener('click', () => this.stopRecordingJapanese());
+                this.japaneseListenText.addEventListener('input', () => this.updateTranslateButtonStates());
                 this.thaiTranslatedText.addEventListener('input', () => this.updateListenButtonStates());
-                this.translateJapaneseToThaiBtn.addEventListener('click', () => this.translateJapaneseToThai()); // Changed
+                this.translateJapaneseToThaiBtn.addEventListener('click', () => this.translateJapaneseToThai());
                 this.listenThaiBtn.addEventListener('click', () => this.speakThaiText());
             }
 
-            startRecordingJapanese() { // Changed method name
+            startRecordingJapanese() {
                 if (!this.geminiApiKey) {
                     this.updateStatus('กรุณาใส่ Gemini API Key ก่อนใช้งาน', 'error');
                     return;
                 }
-                if (this.isRecordingThai) { this.stopRecordingThai(); } // Stop other recording if active
-                if (this.recognitionJapanese && !this.isRecordingJapanese) { // Changed
-                    this.recognitionJapanese.start(); // Changed
+                if (this.isRecordingThai) { this.stopRecordingThai(); }
+                if (this.recognitionJapanese && !this.isRecordingJapanese) {
+                    this.recognitionJapanese.start();
                 }
             }
 
-            stopRecordingJapanese() { // Changed method name
-                if (this.recognitionJapanese && this.isRecordingJapanese) { // Changed
-                    this.recognitionJapanese.stop(); // Changed
+            stopRecordingJapanese() {
+                if (this.recognitionJapanese && this.isRecordingJapanese) {
+                    this.recognitionJapanese.stop();
                 }
-                this.isRecordingJapanese = false; // Changed
-                this.startJapaneseBtn.disabled = !this.geminiApiKey; // Changed
-                this.stopJapaneseBtn.disabled = true; // Changed
-                this.startJapaneseBtn.classList.remove('recording'); // Changed
+                this.isRecordingJapanese = false;
+                this.startJapaneseBtn.disabled = !this.geminiApiKey;
+                this.stopJapaneseBtn.disabled = true;
+                this.startJapaneseBtn.classList.remove('recording');
             }
 
-            onJapaneseRecognitionStart() { // Changed method name
-                this.isRecordingJapanese = true; // Changed
-                this.updateStatus('กำลังฟัง (ญี่ปุ่น)... <span class="wave-animation"></span>', 'listening'); // Changed
-                this.startJapaneseBtn.disabled = true; // Changed
-                this.stopJapaneseBtn.disabled = false; // Changed
-                this.startJapaneseBtn.classList.add('recording'); // Changed
-                this.japaneseListenText.value = ''; // Changed
+            onJapaneseRecognitionStart() {
+                this.isRecordingJapanese = true;
+                this.updateStatus('กำลังฟัง (ญี่ปุ่น)... <span class="wave-animation"></span>', 'listening');
+                this.startJapaneseBtn.disabled = true;
+                this.stopJapaneseBtn.disabled = false;
+                this.startJapaneseBtn.classList.add('recording');
+                this.japaneseListenText.value = '';
                 this.thaiTranslatedText.value = '';
                 this.updateListenButtonStates();
             }
 
-            onJapaneseRecognitionResult(event) { // Changed method name
+            onJapaneseRecognitionResult(event) {
                 let finalTranscript = '';
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1029,34 +1072,34 @@
                         interimTranscript += transcript;
                     }
                 }
-                this.japaneseListenText.value = finalTranscript + interimTranscript; // Changed
+                this.japaneseListenText.value = finalTranscript + interimTranscript;
                 if (finalTranscript) {
-                    this.updateStatus('พบข้อความญี่ปุ่นแล้ว กำลังรอให้คุณพูดจบ...', 'success'); // Changed
+                    this.updateStatus('พบข้อความญี่ปุ่นแล้ว กำลังรอให้คุณพูดจบ...', 'success');
                 }
                 this.updateTranslateButtonStates();
             }
 
-            onJapaneseRecognitionEnd() { // Changed method name
-                this.stopRecordingJapanese(); // Changed
-                if (this.japaneseListenText.value.trim()) { // Changed
-                    this.updateStatus('บันทึกเสียงญี่ปุ่นเสร็จสิ้น กำลังแปลภาษา...', 'processing'); // Changed
-                    this.translateJapaneseToThai(); // Changed
+            onJapaneseRecognitionEnd() {
+                this.stopRecordingJapanese();
+                if (this.japaneseListenText.value.trim()) {
+                    this.updateStatus('บันทึกเสียงญี่ปุ่นเสร็จสิ้น กำลังแปลภาษา...', 'processing');
+                    this.translateJapaneseToThai();
                 } else {
-                    this.updateStatus('กดปุ่ม "เริ่มพูด (ญี่ปุ่น)" เพื่อเริ่มต้น', 'info'); // Changed
+                    this.updateStatus('กดปุ่ม "เริ่มพูด (ญี่ปุ่น)" เพื่อเริ่มต้น', 'info');
                 }
             }
 
-            async translateJapaneseToThai() { // Changed method name
-                this.updateStatus('กำลังแปลภาษาญี่ปุ่นเป็นไทย...', 'processing'); // Changed
-                this.translateJapaneseToThaiBtn.disabled = true; // Changed
+            async translateJapaneseToThai() {
+                this.updateStatus('กำลังแปลภาษาญี่ปุ่นเป็นไทย...', 'processing');
+                this.translateJapaneseToThaiBtn.disabled = true;
                 this.thaiTranslatedText.value = 'Translating...';
                 this.listenThaiBtn.disabled = true;
 
-                const result = await this.translateText(this.japaneseListenText.value, 'Japanese', 'Thai'); // Changed languages
+                const result = await this.translateText(this.japaneseListenText.value, 'Japanese', 'Thai');
                 this.thaiTranslatedText.value = result;
 
                 if (result && !result.startsWith('Error:')) {
-                    this.updateStatus('แปลภาษาญี่ปุ่นเป็นไทยเสร็จสิ้น', 'success'); // Changed
+                    this.updateStatus('แปลภาษาญี่ปุ่นเป็นไทยเสร็จสิ้น', 'success');
                     this.speakThaiText();
                 } else if (result.startsWith('Error:')) {
                     this.thaiTranslatedText.value = result;
